@@ -1,5 +1,5 @@
-create database if not exists e_commerce;
-use e_commerce;
+create database if not exists order_directory;
+use order_directory;
 
 -- Q1 - You are required to create tables for supplier,customer,category,product,productDetails,order,rating to store the data for the E-commerce with the schema definition given below.
 CREATE TABLE IF NOT EXISTS `supplier` (
@@ -130,29 +130,20 @@ SELECT c.* FROM `order` o INNER JOIN product_details prod ON o.prod_id = prod.pr
 -- Q7 - Display the Id and Name of the Product ordered after “2021-10-05”.
 SELECT p.pro_id, p.pro_name FROM `order` o INNER JOIN `product_details` prod ON o.prod_id = prod.prod_id INNER JOIN product p ON p.pro_id = prod.pro_id WHERE o.ORD_DATE > '2021-10-05';
     
--- Q8 - Print the top 3 supplier name and id and their rating on the basis of their rating along with the customer name who has given the rating.
-SELECT s.supp_name, s.supp_id, c.cus_name, r.rat_ratstars FROM supplier s INNER JOIN rating r ON r.supp_id = s.supp_id INNER JOIN customer c ON c.cus_id = r.cus_id ORDER BY r.rat_ratstars DESC LIMIT 3;
-
--- Q7 - Display customer name and gender whose names start or end with character 'A'.
+-- Q8 - Display customer name and gender whose names start or end with character 'A'.
 SELECT * FROM customer c WHERE c.cus_name LIKE 'A%' OR c.cus_name LIKE '%A';
 
--- Q10 - Display the total order amount of the male customers.
-SELECT SUM(o.ord_amount) FROM `order` o INNER JOIN customer c ON o.cus_id = c.cus_id AND c.cus_gender = 'M';
+-- Q9 - Create a stored procedure to display the Rating for a Supplier if any along with the Verdict on that rating if any like if rating >4 then “Genuine Supplier” if rating >2 “Average Supplier” else “Supplier should not be considered”.
+delimiter &&
+	CREATE PROCEDURE supplierRatng()
+	BEGIN
+	select rating.rat_ratstars, supplier.supp_name, 
+	case when  rating.rat_ratstars > 4 then 'Genuine Supplier'
+	when rating.rat_ratstars > 2 then 'Average Supplier'
+	else 'Supplier should not be considered'
+	end as verdict from rating, supplier  where rating.supp_id = supplier.supp_id;
+	END && ;
+	delimiter ;
+	
 
--- Q11 - Display all the Customers left outer join with the orders.
-SELECT * FROM customer c LEFT OUTER JOIN `order` o ON c.cus_id = o.cus_id;
-
--- Q12 - Create a stored procedure to display the Rating for a Supplier if any along with the Verdict on that rating if any like if rating >4 then “Genuine Supplier” if rating >2 “Average Supplier” else “Supplier should not be considered”.
-DELIMITER //
-CREATE PROCEDURE `supplierRatings` ()
-BEGIN
-select s.supp_id, s.supp_name, r.rat_ratstars,
-case
-when r.rat_ratstars > 4 then 'Genuine supplier'
-when r.rat_ratstars > 2 then 'Average'
-else 'Not okay'
-end as verdict from rating r inner join supplier s on s.supp_id = r.supp_id;
-END //
-DELIMITER ;
-
-call supplierRatings();
+	call supplierRatng();
